@@ -39,6 +39,7 @@ private:
         {
             close(sockfd);
         }
+        trd.join();
     }
 };
 

@@ -6,8 +6,6 @@
 #include "tcpservice.h"
 #include "comservice.h"
 
-constexpr int buffer_length = 3; // Setting::BUFLEN
-
 void TCPClient::run(void)
 {
     // Connection loop

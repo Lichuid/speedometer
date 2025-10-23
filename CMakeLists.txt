@@ -55,7 +55,7 @@ list(APPEND SERVER_HEADERS ${SERVER_HEADERS_PATH}comservice.h)
 
 
 # Define a switch-like string variable
-set(COMM_PROTOCOL "TCP" CACHE STRING "Choose communication protocol: UART or TCP") #TCP is temporarily set by default. Will be set to null when both communication protocols are implemented.
+set(COMM_PROTOCOL "TCP" CACHE STRING "Choose communication protocol: UART or TCP") # TCP is set by default.
 
 # Validate and set macro accordingly
 if (COMM_PROTOCOL STREQUAL "UART")
