@@ -3,14 +3,10 @@
 #include <bitset>
 #include <iostream>
 
-// Read buffer as little-endian 24-bit integer
-static uint32_t bufferToValue(const uint8_t *buffer)
+uint32_t COMService::bufferToValue(const uint8_t *buffer)
 {
     return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16);
 }
-// About the comments below for Muetx, if we need them back, we can try the solution i came up with below.
-// Problem: Lock guard implementation is blocking the canvas updates.
-// Solution i could think of is to run the updates for Comeservice in a seperate thread as to mitigae the blcking issue.
 
 uint32_t COMService::getBatteryLevel()
 {

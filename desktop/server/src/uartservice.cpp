@@ -146,6 +146,7 @@ void UARTService::run(void)
 
             if (!serial.waitForBytesWritten(100)) // Timeout in ms
             {
+                std::cout << "Server lost connection to the client" << std::endl;
                 status = false;
                 serial.close();
                 break;

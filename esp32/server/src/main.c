@@ -28,8 +28,6 @@ typedef struct
     uint8_t data[MSGLEN];
 } uart_msg_t;
 
-// Circular buffer
-static uart_msg_t uart_queue[UART_QUEUE_LEN];
 static volatile int uart_head = 0; // index to write
 static volatile int uart_tail = 0; // index to read
 
@@ -293,64 +291,40 @@ int gatt_svr_init(void)
     return rc;
 }
 
-void uart_task(void *pvParameters)
+void notify_task(void *pvParameters)
 {
     uint8_t buffer[MSGLEN];
 
     while (1)
     {
-        // Blocking read from UART
+        // Blocking read from UART (waits indefinitely for data)
         int n = uart_read_bytes(UART_NUM, buffer, MSGLEN, portMAX_DELAY);
+
         if (n == MSGLEN)
         {
-            int next_head = (uart_head + 1) % UART_QUEUE_LEN;
-            if (next_head != uart_tail) // queue not full
+            // Only notify if BLE connection is active
+            if (server_conn_handle != BLE_HS_CONN_HANDLE_NONE)
             {
-                memcpy(uart_queue[uart_head].data, buffer, MSGLEN);
-                uart_head = next_head;
-            }
-            else
-            {
-                // Queue full, drop message
-                ESP_LOGW(TAG, "UART queue full, dropping message");
-            }
-        }
-    }
-}
-
-void notify_task(void *pvParameters)
-{
-    while (1)
-    {
-        if (server_conn_handle != BLE_HS_CONN_HANDLE_NONE)
-        {
-            // Check if queue is not empty
-            if (uart_tail != uart_head)
-            {
-                uint8_t *msg = uart_queue[uart_tail].data;
-                struct os_mbuf *om = ble_hs_mbuf_from_flat(msg, MSGLEN);
-                int rc = ble_gatts_notify_custom(server_conn_handle, ble_svc_gatt_read_val_handle, om);
-
+                struct os_mbuf *om = ble_hs_mbuf_from_flat(buffer, MSGLEN);
+                int rc = ble_gatts_notify_custom(server_conn_handle,
+                                                 ble_svc_gatt_read_val_handle,
+                                                 om);
                 if (rc != 0)
                 {
-                    ESP_LOGE(TAG, "Notify failed: %d", rc);
+                    ESP_LOGE(TAG, "BLE notify failed: %d", rc);
                     os_mbuf_free_chain(om);
-                    vTaskDelay(1); // back off
                 }
-
-                // Advance tail
-                uart_tail = (uart_tail + 1) % UART_QUEUE_LEN;
             }
             else
             {
-                // Queue empty, yield
-                vTaskDelay(1);
+                // Not connected — discard the data or handle as needed
+                ESP_LOGW(TAG, "BLE not connected, discarding UART data");
             }
         }
         else
         {
-            // Not connected, sleep
-            vTaskDelay(5);
+            // UART read error or unexpected length
+            ESP_LOGW(TAG, "UART read length mismatch: %d", n);
         }
     }
 }
@@ -399,7 +373,7 @@ void app_main(void)
     ESP_LOGI(TAG, "UART initialized");
 
     // --- Start UART producer task ---
-    assert(pdTRUE == xTaskCreate(uart_task, "uart_task", 2048, NULL, 3, NULL));
+    // assert(pdTRUE == xTaskCreate(uart_task, "uart_task", 2048, NULL, 3, NULL));
 
     assert(pdTRUE == xTaskCreate(
                          notify_task,
