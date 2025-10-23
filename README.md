@@ -19,7 +19,7 @@ The client application's GUI consist of:
 - Battery level indicator
 - Connection indicator
 
-The two applications can communicate using either a local TCP/IP connection or BLE via two microcontrollers connected to a PC via UART. The protocol is chosen by the user when generating the program through CMAKE. All communication protocols are derived off of a generic communication service class that letting the rest of the program go unchanged when switching between protocols.
+The two applications can communicate using either a local TCP/IP connection or BLE via two microcontrollers connected to a PC via UART. The protocol is chosen by the user when generating the program through CMAKE. All communication protocols are derived off of an abstract communication service class that letting the rest of the program go unchanged when switching between protocols.
 
 The client GUI will inform the user of connection issues between the two applications by turning on the connection indicator symbol, and the server application will print an error message to the terminal. The applications are able to reconnect to one another automatically if this occurs.
 
